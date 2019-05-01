@@ -24,7 +24,7 @@ def _get_package(frame_level):
 
 def internal(target):
     '''
-    a internal decorator that use for prevent get target from package outter.
+    a internal decorator that use for prevent get target from package outside.
     '''
 
     key = f'__pkgvar.{id(target)}'
