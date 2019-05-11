@@ -69,11 +69,20 @@ def internal(target):
 
     key = target.__name__
 
+    if isinstance(target, type):
+        target_type_desc = 'class'
+    elif isinstance(target, types.FunctionType):
+        target_type_desc = 'function'
+    else:
+        target_type_desc = 'object'
+    err_msg = f'{key} is a internal {target_type_desc}'
+
     frame = _get_frame(2)
+    module = inspect.getmodule(frame)
+    package = _get_package_from_module(module)
     is_on_module = frame.f_globals is frame.f_locals
 
     if is_on_module:
-        module = inspect.getmodule(frame)
         module_type = type(module)
         internal_vars: dict = None
 
@@ -95,9 +104,15 @@ def internal(target):
         else:
             target_type_desc = 'object'
 
-        internal_vars[key] = f'{key} is a internal {target_type_desc}'
+        internal_vars[key] = err_msg
 
     else:
-        raise SyntaxError('@internal only allow to run on module level')
+        # define on class.
+        def fget(self):
+            if package is not _get_package(2):
+                raise AttributeError(err_msg)
+            return types.MethodType(target, self)
+
+        return property(fget=fget)
 
     return target
